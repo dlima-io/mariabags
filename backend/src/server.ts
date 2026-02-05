@@ -57,16 +57,24 @@ app.use((req: Request, res: Response) => {
 // Error handling middleware (debe ser el último)
 app.use(errorHandler);
 
-// Start server
-const startServer = async () => {
+// Initialize database connection (para Vercel y local)
+const initializeDatabase = async () => {
   try {
-    const dbConnected = await testConnection();
-
-    if (!dbConnected) {
-      console.error('No se pudo conectar a la base de datos. Verifica la configuración.');
+    await testConnection();
+    console.log('✅ Base de datos conectada correctamente');
+  } catch (error) {
+    console.error('⚠️  Error al conectar con la base de datos:', error);
+    // En Vercel, no hacer exit - dejar que maneje el error
+    if (process.env.VERCEL !== '1') {
+      console.error('💥 Saliendo debido a error de DB (modo local)');
       process.exit(1);
     }
+  }
+};
 
+// Solo ejecutar servidor local si NO estamos en Vercel
+if (process.env.VERCEL !== '1') {
+  initializeDatabase().then(() => {
     app.listen(PORT, () => {
       console.log(`🚀 Servidor María Bags corriendo en puerto ${PORT}`);
       console.log(`📊 Entorno: ${process.env.NODE_ENV || 'development'}`);
@@ -74,12 +82,12 @@ const startServer = async () => {
       console.log(`📚 API: http://localhost:${PORT}/api`);
       console.log(`🔐 Login: POST http://localhost:${PORT}/api/auth/login`);
     });
-  } catch (error) {
-    console.error('Error al iniciar el servidor:', error);
-    process.exit(1);
-  }
-};
+  });
+} else {
+  // En Vercel, inicializar DB pero no hacer listen
+  console.log('🔷 Ejecutando en Vercel (modo serverless)');
+  initializeDatabase();
+}
 
-startServer();
-
+// Exportar app para Vercel
 export default app;
