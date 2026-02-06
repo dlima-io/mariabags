@@ -15,35 +15,12 @@ const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use(helmet());
 
-// CORS configuration - permite múltiples orígenes
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  process.env.CORS_ORIGIN || ''
-];
-
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Permitir requests sin origin (como mobile apps o curl)
-    if (!origin) return callback(null, true);
-
-    // Permitir si está en la lista de orígenes permitidos
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    // Permitir todos los subdominios de vercel.app (para preview deployments)
-    if (origin.includes('.vercel.app')) {
-      return callback(null, true);
-    }
-
-    // Rechazar otros orígenes
-    callback(new Error('Not allowed by CORS'));
-  },
+// CORS configuration - permite todos los orígenes de Vercel
+app.use(cors({
+  origin: true,
   credentials: true,
   optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+}));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
