@@ -10,14 +10,25 @@ import apiRoutes from './routes/index';
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // Security middleware
 app.use(helmet());
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // En desarrollo, permitir cualquier origen que venga de Vite (puertos 5173-5174)
+    if (!origin ||
+        origin.includes('localhost:5174') ||
+        origin.includes('localhost:5173') ||
+        origin.match(/^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:517[34]$/) ||
+        origin.match(/^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}:517[34]$/)) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
@@ -67,10 +78,11 @@ const startServer = async () => {
       process.exit(1);
     }
 
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Servidor María Bags corriendo en puerto ${PORT}`);
       console.log(`📊 Entorno: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+      console.log(`🌐 Network: http://192.168.0.174:${PORT}/api`);
       console.log(`📚 API: http://localhost:${PORT}/api`);
       console.log(`🔐 Login: POST http://localhost:${PORT}/api/auth/login`);
     });

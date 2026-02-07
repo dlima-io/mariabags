@@ -17,11 +17,13 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5173,
+    port: 5174,
+    host: true, // Exponer en todas las interfaces de red
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true
+        target: 'http://192.168.0.174:3000',
+        changeOrigin: true,
+        secure: false
       }
     }
   }
