@@ -107,7 +107,7 @@ const Dashboard = () => {
               Hola, {usuario?.username}
             </h1>
             <p className="text-gray-600">
-              Bienvenido al sistema de gestión de cuentas corrientes de María Bags
+              Bienvenido al sistema de gestión de cuentas corrientes de MARIA Clothing & Bags
             </p>
           </motion.div>
 

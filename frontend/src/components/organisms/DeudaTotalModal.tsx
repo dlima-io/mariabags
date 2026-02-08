@@ -84,11 +84,11 @@ const DeudaTotalModal = ({ isOpen, onClose }: DeudaTotalModalProps) => {
 
     const mensaje = `Hola ${cliente.nombre}!
 
-Te escribo desde María Bags para informarte que tu saldo adeudado es de *${formatCurrency(cliente.saldo)}*.
+Te escribo desde MARIA Clothing & Bags para informarte que tu saldo adeudado es de *${formatCurrency(cliente.saldo)}*.
 
 ${cliente.ultimo_pago ? `Tu último pago fue el ${ultimoPagoTexto}.` : 'Aún no hemos registrado pagos de tu parte.'}
 
-¿Cuándo podrías acercarte a realizar un pago?
+¡Te esperamos!
 
 ¡Gracias!`;
 

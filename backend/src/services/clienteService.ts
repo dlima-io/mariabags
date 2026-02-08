@@ -157,7 +157,7 @@ export class ClienteService {
     const telefonoLimpio = cliente.telefono.replace(/[^\d+]/g, '');
 
     // Mensaje por defecto si no se proporciona
-    const mensajeDefault = `Hola ${cliente.nombre}! Te contacto desde María Bags`;
+    const mensajeDefault = `Hola ${cliente.nombre}! Te contacto desde MARIA Clothing & Bags`;
     const mensajeFinal = message || mensajeDefault;
 
     const url = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensajeFinal)}`;
