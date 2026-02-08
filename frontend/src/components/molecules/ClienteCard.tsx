@@ -232,13 +232,6 @@ const ClienteCard = ({
       )}
 
       {/* Fecha de creación (sutil en la parte inferior) */}
-      <div className="text-xs text-gray-400 mt-2">
-        Cliente desde {new Date(cliente.fecha_creacion).toLocaleDateString('es-AR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        })}
-      </div>
     </motion.div>
   );
 };
