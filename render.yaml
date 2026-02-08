@@ -1,0 +1,71 @@
+# Render Blueprint para María Bags
+# Configuración de infraestructura como código
+
+services:
+  # Backend API
+  - type: web
+    name: mariabags-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DB_HOST
+        fromDatabase:
+          name: mariabags-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: mariabags-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: mariabags-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: mariabags-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: mariabags-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 1h
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: BCRYPT_ROUNDS
+        value: 12
+      - key: CORS_ORIGIN
+        sync: false # Se configurará manualmente con la URL del frontend
+    healthCheckPath: /api/health
+
+  # Frontend Static Site
+  - type: web
+    name: mariabags-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false # Se configurará manualmente con la URL del backend
+      - key: VITE_APP_NAME
+        value: MARIA Clothing & Bags
+      - key: VITE_WHATSAPP_DEFAULT_MESSAGE
+        value: Hola! Te contacto desde MARIA Clothing & Bags
+
+databases:
+  # PostgreSQL Database
+  - name: mariabags-db
+    plan: free
+    databaseName: mariabags
+    user: mariabags_user

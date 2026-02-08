@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { testConnection } from './config/database';
+import { pool, testConnection } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 import apiRoutes from './routes/index';
 
@@ -18,12 +18,25 @@ app.use(helmet());
 // CORS configuration
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // En desarrollo, permitir cualquier origen que venga de Vite (puertos 5173-5174)
-    if (!origin ||
-        origin.includes('localhost:5174') ||
-        origin.includes('localhost:5173') ||
-        origin.match(/^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:517[34]$/) ||
-        origin.match(/^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}:517[34]$/)) {
+    const allowedOrigins = [
+      process.env.CORS_ORIGIN, // Origen configurado en .env (producción)
+      'http://localhost:5173',
+      'http://localhost:5174'
+    ].filter(Boolean); // Eliminar valores undefined
+
+    // En desarrollo, permitir también IPs locales
+    if (process.env.NODE_ENV === 'development') {
+      if (!origin ||
+          origin.includes('localhost') ||
+          origin.match(/^http:\/\/192\.168\.\d{1,3}\.\d{1,3}:517[34]$/) ||
+          origin.match(/^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}:517[34]$/)) {
+        callback(null, true);
+        return;
+      }
+    }
+
+    // Verificar si el origen está en la lista permitida
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('No permitido por CORS'));
@@ -45,13 +58,27 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
-// Health check endpoint
-app.get('/health', (_req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+// Health check endpoint (para Render y monitoreo)
+app.get('/health', async (_req: Request, res: Response) => {
+  try {
+    // Verificar conexión a la base de datos
+    await pool.query('SELECT NOW()');
+
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      database: 'connected',
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      database: 'disconnected',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 // API routes
