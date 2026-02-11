@@ -1,0 +1,17 @@
+{
+  "name": "MARIA Clothing & Bags",
+  "short_name": "MARIA Bags",
+  "description": "Sistema de gestión de cuentas corrientes",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/Icono.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
