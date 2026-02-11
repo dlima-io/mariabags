@@ -31,7 +31,7 @@ interface AjusteModalProps {
   isOpen: boolean;
   onClose: () => void;
   cliente: ClienteConSaldo;
-  onSuccess: () => void;
+  onSuccess: (data: { tipoAjuste: 'MONTO' | 'PORCENTAJE'; valor: number }) => void;
 }
 
 const AjusteModal = ({ isOpen, onClose, cliente, onSuccess }: AjusteModalProps) => {
@@ -132,7 +132,7 @@ const AjusteModal = ({ isOpen, onClose, cliente, onSuccess }: AjusteModalProps) 
     }
 
     if (resultado) {
-      onSuccess();
+      onSuccess({ tipoAjuste, valor: parseFloat(valorInput) });
       onClose();
     }
   };

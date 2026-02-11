@@ -12,7 +12,7 @@ import { movimientoService } from '@/services/movimientoService';
 
 interface UseMovimientoFormParams {
   clienteId: string;
-  onSuccess?: () => void;
+  onSuccess?: (data: { tipo: TipoMovimiento; monto: number; observaciones?: string }) => void;
 }
 
 interface UseMovimientoFormReturn {
@@ -133,7 +133,7 @@ export const useMovimientoForm = ({
         reset();
 
         if (onSuccess) {
-          onSuccess();
+          onSuccess({ tipo, monto: Math.abs(montoNum), observaciones: observaciones.trim() || undefined });
         }
       } catch (err: any) {
         const errorMessage = err.message || 'Error al registrar movimiento';

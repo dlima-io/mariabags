@@ -18,7 +18,7 @@ import { useMovimientoForm } from '@/hooks/useMovimientoForm';
 
 interface MovimientoFormProps {
   clienteId: string;
-  onSuccess: () => void;
+  onSuccess: (data: { tipo: TipoMovimiento; monto: number; observaciones?: string }) => void;
   onCancel: () => void;
   tipoDefault?: TipoMovimiento;
 }

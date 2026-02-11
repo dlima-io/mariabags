@@ -17,7 +17,7 @@ interface MovimientoFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   clienteId: string;
-  onSuccess: () => void;
+  onSuccess: (data: { tipo: TipoMovimiento; monto: number; observaciones?: string }) => void;
   tipoDefault?: TipoMovimiento;
 }
 
@@ -31,8 +31,8 @@ const MovimientoFormModal = ({
   /**
    * Maneja el éxito del formulario
    */
-  const handleSuccess = () => {
-    onSuccess();
+  const handleSuccess = (data: { tipo: TipoMovimiento; monto: number; observaciones?: string }) => {
+    onSuccess(data);
     onClose();
   };
 

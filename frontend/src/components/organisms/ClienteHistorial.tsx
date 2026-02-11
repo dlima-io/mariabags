@@ -7,6 +7,8 @@ import { ClienteConSaldo } from '@/types/Cliente.types';
 import { Movimiento, TipoMovimiento } from '@/types/Movimiento.types';
 import { clienteService } from '@/services/clienteService';
 import { movimientoService } from '@/services/movimientoService';
+import { useWhatsApp } from '@/hooks/useWhatsApp';
+import { buildMovimientoMessage, buildAjusteMessage } from '@/utils/whatsappMessages';
 import SaldoCard from '@/components/molecules/SaldoCard';
 import FilterBar from '@/components/molecules/FilterBar';
 import MovimientosList from '@/components/organisms/MovimientosList';
@@ -33,6 +35,7 @@ interface ClienteHistorialProps {
 
 const ClienteHistorial = ({ clienteId }: ClienteHistorialProps) => {
   const navigate = useNavigate();
+  const { openWhatsApp } = useWhatsApp();
 
   // Estado
   const [cliente, setCliente] = useState<ClienteConSaldo | null>(null);
@@ -45,7 +48,7 @@ const ClienteHistorial = ({ clienteId }: ClienteHistorialProps) => {
   /**
    * Carga datos del cliente y movimientos
    */
-  const fetchData = async () => {
+  const fetchData = async (): Promise<ClienteConSaldo | null> => {
     setLoading(true);
     try {
       // Cargar cliente CON SALDO y movimientos en paralelo
@@ -56,9 +59,11 @@ const ClienteHistorial = ({ clienteId }: ClienteHistorialProps) => {
 
       setCliente(clienteData);
       setMovimientos(movimientosData);
+      return clienteData;
     } catch (error: any) {
       toast.error(error.message || 'Error al cargar datos');
       console.error(error);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -101,8 +106,12 @@ const ClienteHistorial = ({ clienteId }: ClienteHistorialProps) => {
   /**
    * Maneja el éxito del registro
    */
-  const handleModalSuccess = () => {
-    fetchData();
+  const handleModalSuccess = async (data: { tipo: TipoMovimiento; monto: number; observaciones?: string }) => {
+    const clienteActualizado = await fetchData();
+    if (clienteActualizado) {
+      const message = buildMovimientoMessage(data.tipo, data.monto, data.observaciones, clienteActualizado.saldo, clienteActualizado.nombre);
+      openWhatsApp(clienteActualizado.telefono, message);
+    }
   };
 
   /**
@@ -115,8 +124,12 @@ const ClienteHistorial = ({ clienteId }: ClienteHistorialProps) => {
   /**
    * Maneja el éxito del ajuste
    */
-  const handleAjusteSuccess = () => {
-    fetchData();
+  const handleAjusteSuccess = async (data: { tipoAjuste: 'MONTO' | 'PORCENTAJE'; valor: number }) => {
+    const clienteActualizado = await fetchData();
+    if (clienteActualizado) {
+      const message = buildAjusteMessage(data.tipoAjuste, data.valor, clienteActualizado.saldo, clienteActualizado.nombre);
+      openWhatsApp(clienteActualizado.telefono, message);
+    }
   };
 
   /**
