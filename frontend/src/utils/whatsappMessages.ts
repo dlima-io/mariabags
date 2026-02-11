@@ -17,10 +17,16 @@ export const buildMovimientoMessage = (
   const saldoText = formatSaldo(nuevoSaldo);
 
   switch (tipo) {
-    case TipoMovimiento.DEBITO:
-      return observaciones
-        ? `Hola ${nombre}!\nHoy pasaste por el local y te llevaste *${observaciones}* por un valor de *${formatCurrency(monto)}*.\n${saldoText}.`
-        : `Hola ${nombre}!\nHoy pasaste por el local e hiciste una compra de *${formatCurrency(monto)}*.\n${saldoText}.`;
+    case TipoMovimiento.DEBITO: {
+      if (observaciones) {
+        const itemsList = observaciones
+          .split(' | ')
+          .map(item => `  - ${item}`)
+          .join('\n');
+        return `Hola ${nombre}!\nHoy pasaste por el local y te llevaste:\n${itemsList}`;
+      }
+      return `Hola ${nombre}!\nHoy pasaste por el local e hiciste una compra de *${formatCurrency(monto)}*.\n${saldoText}.`;
+    }
     case TipoMovimiento.CREDITO:
       return `Hola ${nombre}!\nRegistramos tu pago de *${formatCurrency(monto)}*.\n${saldoText}.\nGracias!`;
     case TipoMovimiento.AJUSTE:

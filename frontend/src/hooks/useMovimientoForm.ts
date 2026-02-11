@@ -1,14 +1,13 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { TipoMovimiento } from '@/types/Movimiento.types';
 import { toast } from 'react-hot-toast';
 import { movimientoService } from '@/services/movimientoService';
 
-/**
- * useMovimientoForm Hook
- *
- * Hook personalizado para manejar el formulario de movimientos
- * Gestiona estado, validaciones y envío
- */
+export interface ItemCompra {
+  id: string;
+  descripcion: string;
+  precio: string;
+}
 
 interface UseMovimientoFormParams {
   clienteId: string;
@@ -22,6 +21,11 @@ interface UseMovimientoFormReturn {
   setMonto: (monto: string) => void;
   observaciones: string;
   setObservaciones: (obs: string) => void;
+  items: ItemCompra[];
+  addItem: () => void;
+  removeItem: (id: string) => void;
+  updateItem: (id: string, field: 'descripcion' | 'precio', value: string) => void;
+  totalItems: number;
   loading: boolean;
   error: string | null;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
@@ -36,14 +40,41 @@ export const useMovimientoForm = ({
   const [tipo, setTipo] = useState<TipoMovimiento>(TipoMovimiento.DEBITO);
   const [monto, setMonto] = useState<string>('');
   const [observaciones, setObservaciones] = useState<string>('');
+  const [items, setItems] = useState<ItemCompra[]>([{ id: '1', descripcion: '', precio: '' }]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Valida el formulario
-   */
+  const totalItems = useMemo(() => {
+    return items.reduce((sum, item) => {
+      const precio = parseFloat(item.precio);
+      return sum + (isNaN(precio) || precio < 0 ? 0 : precio);
+    }, 0);
+  }, [items]);
+
+  const addItem = useCallback(() => {
+    setItems(prev => [...prev, { id: Date.now().toString(), descripcion: '', precio: '' }]);
+  }, []);
+
+  const removeItem = useCallback((id: string) => {
+    setItems(prev => prev.filter(item => item.id !== id));
+  }, []);
+
+  const updateItem = useCallback((id: string, field: 'descripcion' | 'precio', value: string) => {
+    setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  }, []);
+
   const validate = useCallback((): { valid: boolean; error?: string } => {
-    // Validar monto
+    if (tipo === TipoMovimiento.DEBITO) {
+      const itemsValidos = items.filter(item => {
+        const precio = parseFloat(item.precio);
+        return item.descripcion.trim() !== '' && !isNaN(precio) && precio > 0;
+      });
+      if (itemsValidos.length === 0) {
+        return { valid: false, error: 'Agregá al menos un ítem con descripción y precio válido' };
+      }
+      return { valid: true };
+    }
+
     const montoNum = parseFloat(monto);
 
     if (!monto || isNaN(montoNum)) {
@@ -58,32 +89,31 @@ export const useMovimientoForm = ({
       return { valid: false, error: 'El monto es demasiado grande' };
     }
 
-    // Para DEBITO y CREDITO, el monto debe ser positivo
     if (tipo !== TipoMovimiento.AJUSTE && montoNum < 0) {
-      return { valid: false, error: 'El monto no puede ser negativo para compras y pagos' };
+      return { valid: false, error: 'El monto no puede ser negativo para pagos' };
     }
 
-    // Validar observaciones (opcional, pero con límite)
     if (observaciones.length > 500) {
       return { valid: false, error: 'Las observaciones no pueden superar los 500 caracteres' };
     }
 
     return { valid: true };
-  }, [monto, tipo, observaciones]);
+  }, [tipo, items, monto, observaciones]);
 
-  /**
-   * Verifica si el formulario es válido
-   */
   const isValid = validate().valid;
 
-  /**
-   * Maneja el envío del formulario
-   */
+  const reset = useCallback(() => {
+    setTipo(TipoMovimiento.DEBITO);
+    setMonto('');
+    setObservaciones('');
+    setItems([{ id: '1', descripcion: '', precio: '' }]);
+    setError(null);
+  }, []);
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
 
-      // Validar
       const validation = validate();
       if (!validation.valid) {
         setError(validation.error || 'Error de validación');
@@ -91,16 +121,57 @@ export const useMovimientoForm = ({
         return;
       }
 
+      if (tipo === TipoMovimiento.DEBITO) {
+        const itemsValidos = items.filter(item => {
+          const precio = parseFloat(item.precio);
+          return item.descripcion.trim() !== '' && !isNaN(precio) && precio > 0;
+        });
+        const montoTotal = itemsValidos.reduce((sum, item) => sum + parseFloat(item.precio), 0);
+        const obs = itemsValidos
+          .map(item => `${item.descripcion.trim()} $${parseFloat(item.precio).toLocaleString('es-AR')}`)
+          .join(' | ');
+
+        if (montoTotal > 10000) {
+          const confirmed = window.confirm(
+            `¿Confirmar compra de $${montoTotal.toLocaleString('es-AR')}?`
+          );
+          if (!confirmed) return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+          await movimientoService.createCompra({
+            cliente_id: clienteId,
+            monto: montoTotal,
+            observaciones: obs || undefined,
+          });
+
+          toast.success('Movimiento registrado exitosamente');
+          reset();
+
+          if (onSuccess) {
+            onSuccess({ tipo, monto: montoTotal, observaciones: obs || undefined });
+          }
+        } catch (err: any) {
+          const errorMessage = err.message || 'Error al registrar movimiento';
+          setError(errorMessage);
+          toast.error(errorMessage);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
+      // CREDITO / AJUSTE
       const montoNum = parseFloat(monto);
 
-      // Confirmación para montos grandes
       if (Math.abs(montoNum) > 10000) {
         const confirmed = window.confirm(
           `¿Confirmar movimiento de $${Math.abs(montoNum).toLocaleString('es-AR')}?`
         );
-        if (!confirmed) {
-          return;
-        }
+        if (!confirmed) return;
       }
 
       setLoading(true);
@@ -113,18 +184,14 @@ export const useMovimientoForm = ({
           observaciones: observaciones.trim() || undefined,
         };
 
-        // Llamar al servicio según el tipo
         switch (tipo) {
-          case TipoMovimiento.DEBITO:
-            await movimientoService.createCompra(data);
-            break;
           case TipoMovimiento.CREDITO:
             await movimientoService.createPago(data);
             break;
           case TipoMovimiento.AJUSTE:
             await movimientoService.createAjuste({
               ...data,
-              monto: montoNum, // Para ajustes, mantener el signo
+              monto: montoNum,
             });
             break;
         }
@@ -143,18 +210,8 @@ export const useMovimientoForm = ({
         setLoading(false);
       }
     },
-    [clienteId, tipo, monto, observaciones, validate, onSuccess]
+    [clienteId, tipo, monto, observaciones, items, validate, reset, onSuccess]
   );
-
-  /**
-   * Resetea el formulario
-   */
-  const reset = useCallback(() => {
-    setTipo(TipoMovimiento.DEBITO);
-    setMonto('');
-    setObservaciones('');
-    setError(null);
-  }, []);
 
   return {
     tipo,
@@ -163,6 +220,11 @@ export const useMovimientoForm = ({
     setMonto,
     observaciones,
     setObservaciones,
+    items,
+    addItem,
+    removeItem,
+    updateItem,
+    totalItems,
     loading,
     error,
     handleSubmit,
