@@ -96,7 +96,7 @@ ${cliente.ultimo_pago ? `Tu último pago fue el ${ultimoPagoTexto}.` : 'Aún no 
     const telefonoLimpio = cliente.telefono.replace(/[^\d+]/g, '');
     const url = `https://wa.me/${telefonoLimpio}?text=${encodeURIComponent(mensaje)}`;
 
-    window.open(url, '_blank');
+    window.location.href = url;
   };
 
   /**

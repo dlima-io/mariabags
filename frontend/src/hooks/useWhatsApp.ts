@@ -20,7 +20,7 @@ export const useWhatsApp = (): UseWhatsAppReturn => {
   const generateWhatsAppLink = useCallback(async (clienteId: string, message?: string) => {
     try {
       const url = await clienteService.getWhatsAppLink(clienteId, message);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.location.href = url;
     } catch (error: any) {
       console.error('Error al generar link de WhatsApp:', error);
       throw error;
@@ -40,7 +40,9 @@ export const useWhatsApp = (): UseWhatsAppReturn => {
     const encodedMessage = message ? `?text=${encodeURIComponent(message)}` : '';
     const url = `${baseUrl}${cleanPhone}${encodedMessage}`;
 
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // Usar location.href en lugar de window.open para compatibilidad con iOS Safari
+    // (window.open es bloqueado después de async/await en iPhone)
+    window.location.href = url;
   }, []);
 
   return {
