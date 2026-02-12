@@ -37,8 +37,8 @@ api.interceptors.response.use(
       localStorage.removeItem('mariabags_token');
       localStorage.removeItem('mariabags_user');
 
-      // Redirigir a login (se puede mejorar con react-router)
       if (window.location.pathname !== '/login') {
+        sessionStorage.setItem('mariabags_redirect', window.location.pathname + window.location.search);
         window.location.href = '/login';
       }
     }

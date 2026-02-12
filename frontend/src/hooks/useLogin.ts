@@ -98,8 +98,10 @@ export const useLogin = () => {
       // Guardar token y usuario en el contexto
       authLogin(token, usuario);
 
-      // Redirigir al dashboard
-      navigate('/', { replace: true });
+      // Redirigir a la ruta original o al dashboard
+      const redirect = sessionStorage.getItem('mariabags_redirect');
+      sessionStorage.removeItem('mariabags_redirect');
+      navigate(redirect || '/', { replace: true });
     } catch (error: any) {
       // Manejar errores de la petición
       if (error.response?.status === 401) {
