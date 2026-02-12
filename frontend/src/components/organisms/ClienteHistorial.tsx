@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calculator } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'react-hot-toast';
 import { ClienteConSaldo } from '@/types/Cliente.types';
 import { Movimiento, TipoMovimiento } from '@/types/Movimiento.types';
 import { clienteService } from '@/services/clienteService';
