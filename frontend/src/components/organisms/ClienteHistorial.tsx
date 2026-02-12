@@ -61,8 +61,13 @@ const ClienteHistorial = ({ clienteId }: ClienteHistorialProps) => {
       setMovimientos(movimientosData);
       return clienteData;
     } catch (error: any) {
-      toast.error(error.message || 'Error al cargar datos');
       console.error(error);
+      // Para errores que no son 401 (el interceptor ya maneja el 401),
+      // guardar la ruta actual y redirigir al login
+      if (error.response?.status !== 401) {
+        sessionStorage.setItem('mariabags_redirect', window.location.pathname);
+        navigate('/login', { replace: true });
+      }
       return null;
     } finally {
       setLoading(false);
@@ -151,24 +156,9 @@ const ClienteHistorial = ({ clienteId }: ClienteHistorialProps) => {
     );
   }
 
-  // Error: cliente no encontrado
+  // Si cliente es null y ya no está cargando, la redirección ya fue iniciada
   if (!cliente) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="text-center max-w-md">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Cliente no encontrado</h2>
-          <p className="text-gray-600 mb-6">
-            No se pudo cargar la información del cliente.
-          </p>
-          <button
-            onClick={handleVolverClick}
-            className="px-6 py-3 bg-primary-500 text-white font-semibold rounded-lg hover:bg-primary-600 transition-colors"
-          >
-            Volver
-          </button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
