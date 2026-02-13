@@ -12,12 +12,14 @@ interface CreateCompraDTO {
   cliente_id: string;
   monto: number;
   observaciones?: string;
+  fecha?: string;
 }
 
 interface CreatePagoDTO {
   cliente_id: string;
   monto: number;
   observaciones?: string;
+  fecha?: string;
 }
 
 interface CreateAjusteDTO {
@@ -25,6 +27,7 @@ interface CreateAjusteDTO {
   monto: number;
   observaciones?: string;
   porcentaje?: number;
+  fecha?: string;
 }
 
 interface EstadisticasMovimientos {

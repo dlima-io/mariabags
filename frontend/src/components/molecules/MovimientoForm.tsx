@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, DollarSign, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { ShoppingBag, DollarSign, AlertCircle, Plus, Trash2, Calendar } from 'lucide-react';
 import { TipoMovimiento } from '@/types/Movimiento.types';
 import Button from '@/components/atoms/Button';
 import { useMovimientoForm } from '@/hooks/useMovimientoForm';
@@ -24,6 +24,8 @@ const MovimientoForm = ({
     setMonto,
     observaciones,
     setObservaciones,
+    fecha,
+    setFecha,
     items,
     addItem,
     removeItem,
@@ -67,6 +69,31 @@ const MovimientoForm = ({
               <span>{label}</span>
             </motion.button>
           ))}
+        </div>
+      </div>
+
+      {/* Fecha del movimiento */}
+      <div>
+        <label htmlFor="fecha" className="block text-sm font-semibold text-gray-700 mb-2">
+          Fecha del movimiento
+        </label>
+        <div className="relative">
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          <input
+            type="date"
+            id="fecha"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            max={new Date().toISOString().split('T')[0]}
+            disabled={loading}
+            className="
+              w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl
+              focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+              focus:outline-none text-sm font-medium
+              transition-all duration-200
+              disabled:bg-gray-100 disabled:cursor-not-allowed
+            "
+          />
         </div>
       </div>
 

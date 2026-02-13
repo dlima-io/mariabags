@@ -49,18 +49,19 @@ export class MovimientoModel {
    * Crear nuevo movimiento (con auditoría de usuario)
    */
   static async create(data: CreateMovimientoDTO, usuarioId: string): Promise<Movimiento> {
-    const query = `
-      INSERT INTO movimientos (cliente_id, usuario_id, tipo, monto, observaciones)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-    `;
-    const result = await pool.query(query, [
-      data.cliente_id,
-      usuarioId,
-      data.tipo,
-      data.monto,
-      data.observaciones || null
-    ]);
+    const query = data.fecha
+      ? `INSERT INTO movimientos (cliente_id, usuario_id, tipo, monto, observaciones, fecha)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`
+      : `INSERT INTO movimientos (cliente_id, usuario_id, tipo, monto, observaciones)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`;
+
+    const params = data.fecha
+      ? [data.cliente_id, usuarioId, data.tipo, data.monto, data.observaciones || null, data.fecha]
+      : [data.cliente_id, usuarioId, data.tipo, data.monto, data.observaciones || null];
+
+    const result = await pool.query(query, params);
     return this.parseMovimiento(result.rows[0]);
   }
 

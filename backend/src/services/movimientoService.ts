@@ -66,14 +66,16 @@ export class MovimientoService {
     clienteId: string,
     monto: number,
     usuarioId: string,
-    observaciones?: string
+    observaciones?: string,
+    fecha?: string
   ): Promise<Movimiento> {
     return this.createMovimiento(
       {
         cliente_id: clienteId,
         tipo: TipoMovimiento.DEBITO,
         monto,
-        observaciones
+        observaciones,
+        fecha
       },
       usuarioId
     );
@@ -86,14 +88,16 @@ export class MovimientoService {
     clienteId: string,
     monto: number,
     usuarioId: string,
-    observaciones?: string
+    observaciones?: string,
+    fecha?: string
   ): Promise<Movimiento> {
     return this.createMovimiento(
       {
         cliente_id: clienteId,
         tipo: TipoMovimiento.CREDITO,
         monto,
-        observaciones
+        observaciones,
+        fecha
       },
       usuarioId
     );
@@ -106,7 +110,8 @@ export class MovimientoService {
     clienteId: string,
     monto: number,
     usuarioId: string,
-    observaciones?: string
+    observaciones?: string,
+    fecha?: string
   ): Promise<Movimiento> {
     if (monto === 0) {
       throw new AppError('El ajuste no puede ser 0', 400);
@@ -120,7 +125,8 @@ export class MovimientoService {
         cliente_id: clienteId,
         tipo: TipoMovimiento.AJUSTE,
         monto,
-        observaciones: observacionesAuto
+        observaciones: observacionesAuto,
+        fecha
       },
       usuarioId
     );

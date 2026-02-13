@@ -96,13 +96,14 @@ export class MovimientoController {
    */
   static async registrarCompra(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { cliente_id, monto, observaciones } = req.body;
+      const { cliente_id, monto, observaciones, fecha } = req.body;
       const usuarioId = req.usuario!.id;
       const movimiento = await MovimientoService.registrarCompra(
         cliente_id,
         monto,
         usuarioId,
-        observaciones
+        observaciones,
+        fecha
       );
       res.status(201).json(movimiento);
     } catch (error: any) {
@@ -116,13 +117,14 @@ export class MovimientoController {
    */
   static async registrarPago(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { cliente_id, monto, observaciones } = req.body;
+      const { cliente_id, monto, observaciones, fecha } = req.body;
       const usuarioId = req.usuario!.id;
       const movimiento = await MovimientoService.registrarPago(
         cliente_id,
         monto,
         usuarioId,
-        observaciones
+        observaciones,
+        fecha
       );
       res.status(201).json(movimiento);
     } catch (error: any) {
@@ -136,13 +138,14 @@ export class MovimientoController {
    */
   static async aplicarAjuste(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { cliente_id, monto, observaciones } = req.body;
+      const { cliente_id, monto, observaciones, fecha } = req.body;
       const usuarioId = req.usuario!.id;
       const movimiento = await MovimientoService.aplicarAjuste(
         cliente_id,
         monto,
         usuarioId,
-        observaciones
+        observaciones,
+        fecha
       );
       res.status(201).json(movimiento);
     } catch (error: any) {

@@ -19,6 +19,7 @@ export interface CreateMovimientoDTO {
   tipo: TipoMovimiento;
   monto: number;
   observaciones?: string;
+  fecha?: string;
 }
 
 export interface UpdateMovimientoDTO {

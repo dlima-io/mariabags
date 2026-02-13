@@ -21,6 +21,8 @@ interface UseMovimientoFormReturn {
   setMonto: (monto: string) => void;
   observaciones: string;
   setObservaciones: (obs: string) => void;
+  fecha: string;
+  setFecha: (fecha: string) => void;
   items: ItemCompra[];
   addItem: () => void;
   removeItem: (id: string) => void;
@@ -40,6 +42,7 @@ export const useMovimientoForm = ({
   const [tipo, setTipo] = useState<TipoMovimiento>(TipoMovimiento.DEBITO);
   const [monto, setMonto] = useState<string>('');
   const [observaciones, setObservaciones] = useState<string>('');
+  const [fecha, setFecha] = useState<string>(new Date().toISOString().split('T')[0]);
   const [items, setItems] = useState<ItemCompra[]>([{ id: '1', descripcion: '', precio: '' }]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,6 +109,7 @@ export const useMovimientoForm = ({
     setTipo(TipoMovimiento.DEBITO);
     setMonto('');
     setObservaciones('');
+    setFecha(new Date().toISOString().split('T')[0]);
     setItems([{ id: '1', descripcion: '', precio: '' }]);
     setError(null);
   }, []);
@@ -146,6 +150,7 @@ export const useMovimientoForm = ({
             cliente_id: clienteId,
             monto: montoTotal,
             observaciones: obs || undefined,
+            fecha,
           });
 
           toast.success('Movimiento registrado exitosamente');
@@ -182,6 +187,7 @@ export const useMovimientoForm = ({
           cliente_id: clienteId,
           monto: Math.abs(montoNum),
           observaciones: observaciones.trim() || undefined,
+          fecha,
         };
 
         switch (tipo) {
@@ -210,7 +216,7 @@ export const useMovimientoForm = ({
         setLoading(false);
       }
     },
-    [clienteId, tipo, monto, observaciones, items, validate, reset, onSuccess]
+    [clienteId, tipo, monto, observaciones, fecha, items, validate, reset, onSuccess]
   );
 
   return {
@@ -220,6 +226,8 @@ export const useMovimientoForm = ({
     setMonto,
     observaciones,
     setObservaciones,
+    fecha,
+    setFecha,
     items,
     addItem,
     removeItem,
