@@ -81,6 +81,12 @@ app.get('/health', async (_req: Request, res: Response) => {
   }
 });
 
+// Deshabilitar caché para todas las rutas de la API
+app.use('/api', (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+
 // API routes
 app.use('/api', apiRoutes);
 
