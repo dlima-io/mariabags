@@ -249,10 +249,24 @@ export class ClienteModel {
   }
 
   /**
-   * Obtener clientes con deuda incluyendo información del último pago
+   * Obtener clientes con deuda incluyendo información del último pago y última compra.
+   * Ordenados por tiempo sin pagar: primero los que llevan más días.
+   * Para quienes nunca pagaron, se usa dias_desde_ultima_compra como valor de ordenamiento.
    */
   static async findWithDebtAndLastPayment(): Promise<any[]> {
     const query = `
+      WITH ultimo_pago AS (
+        SELECT cliente_id, MAX(fecha) as fecha
+        FROM movimientos
+        WHERE tipo = 'CREDITO'
+        GROUP BY cliente_id
+      ),
+      ultima_compra AS (
+        SELECT cliente_id, MAX(fecha) as fecha
+        FROM movimientos
+        WHERE tipo = 'DEBITO'
+        GROUP BY cliente_id
+      )
       SELECT
         c.id,
         c.nombre,
@@ -261,37 +275,29 @@ export class ClienteModel {
         c.activo,
         sc.saldo,
         sc.ultima_operacion,
-        (
-          SELECT m.fecha
-          FROM movimientos m
-          WHERE m.cliente_id = c.id
-            AND m.tipo = 'CREDITO'
-          ORDER BY m.fecha DESC
-          LIMIT 1
-        ) as ultimo_pago,
+        up.fecha AS ultimo_pago,
         CASE
-          WHEN (
-            SELECT m.fecha
-            FROM movimientos m
-            WHERE m.cliente_id = c.id
-              AND m.tipo = 'CREDITO'
-            ORDER BY m.fecha DESC
-            LIMIT 1
-          ) IS NULL THEN NULL
-          ELSE EXTRACT(DAY FROM NOW() - (
-            SELECT m.fecha
-            FROM movimientos m
-            WHERE m.cliente_id = c.id
-              AND m.tipo = 'CREDITO'
-            ORDER BY m.fecha DESC
-            LIMIT 1
-          ))::INTEGER
-        END as dias_sin_pagar
+          WHEN up.fecha IS NULL THEN NULL
+          ELSE EXTRACT(DAY FROM NOW() - up.fecha)::INTEGER
+        END AS dias_sin_pagar,
+        uc.fecha AS ultima_compra,
+        CASE
+          WHEN uc.fecha IS NULL THEN NULL
+          ELSE EXTRACT(DAY FROM NOW() - uc.fecha)::INTEGER
+        END AS dias_desde_ultima_compra
       FROM clientes c
       INNER JOIN saldos_clientes sc ON c.id = sc.cliente_id
+      LEFT JOIN ultimo_pago up ON c.id = up.cliente_id
+      LEFT JOIN ultima_compra uc ON c.id = uc.cliente_id
       WHERE c.activo = TRUE
         AND sc.saldo > 0
-      ORDER BY sc.saldo DESC
+      ORDER BY
+        COALESCE(
+          CASE WHEN up.fecha IS NULL THEN NULL
+               ELSE EXTRACT(DAY FROM NOW() - up.fecha)::INTEGER END,
+          CASE WHEN uc.fecha IS NULL THEN NULL
+               ELSE EXTRACT(DAY FROM NOW() - uc.fecha)::INTEGER END
+        ) DESC NULLS LAST
     `;
 
     const result = await pool.query(query);

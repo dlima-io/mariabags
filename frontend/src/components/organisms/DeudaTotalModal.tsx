@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, TrendingUp, User, Calendar, MessageCircle } from 'lucide-react';
+import { X, TrendingUp, User, Calendar, MessageCircle, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { clienteService } from '@/services/clienteService';
 import { formatCurrency, formatDate } from '@/utils/formatters';
@@ -27,6 +27,8 @@ interface ClienteConDeuda {
   saldo: number;
   ultimo_pago: string | null;
   dias_sin_pagar: number | null;
+  ultima_compra: string | null;
+  dias_desde_ultima_compra: number | null;
 }
 
 interface DeudaTotalModalProps {
@@ -38,6 +40,7 @@ const DeudaTotalModal = ({ isOpen, onClose }: DeudaTotalModalProps) => {
   const navigate = useNavigate();
   const [clientes, setClientes] = useState<ClienteConDeuda[]>([]);
   const [loading, setLoading] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
 
   /**
    * Obtiene los clientes con deuda cuando se abre el modal
@@ -45,6 +48,7 @@ const DeudaTotalModal = ({ isOpen, onClose }: DeudaTotalModalProps) => {
   useEffect(() => {
     if (isOpen) {
       fetchClientes();
+      setBusqueda('');
     }
   }, [isOpen]);
 
@@ -62,7 +66,20 @@ const DeudaTotalModal = ({ isOpen, onClose }: DeudaTotalModalProps) => {
   };
 
   /**
-   * Calcula el total de deudas
+   * Filtra clientes según el término de búsqueda
+   */
+  const clientesFiltrados = busqueda.trim()
+    ? clientes.filter(c => {
+        const term = busqueda.toLowerCase();
+        return (
+          c.nombre.toLowerCase().includes(term) ||
+          c.apellido.toLowerCase().includes(term)
+        );
+      })
+    : clientes;
+
+  /**
+   * Calcula el total de deudas (siempre sobre el total, no el filtrado)
    */
   const totalDeuda = clientes.reduce((sum, cliente) => sum + cliente.saldo, 0);
 
@@ -100,11 +117,10 @@ ${cliente.ultimo_pago ? `Tu último pago fue el ${ultimoPagoTexto}.` : 'Aún no 
   };
 
   /**
-   * Formatea los días sin pagar
+   * Formatea los días como texto legible
    */
-  const formatDiasSinPagar = (dias: number | null): string => {
-    if (dias === null) return 'Nunca pagó';
-    if (dias === 0) return 'Pagó hoy';
+  const formatDias = (dias: number): string => {
+    if (dias === 0) return 'hoy';
     if (dias === 1) return '1 día';
     return `${dias} días`;
   };
@@ -162,7 +178,10 @@ ${cliente.ultimo_pago ? `Tu último pago fue el ${ultimoPagoTexto}.` : 'Aún no 
                       Clientes con Deuda
                     </h2>
                     <p className="text-sm text-gray-500">
-                      {clientes.length} {clientes.length === 1 ? 'cliente' : 'clientes'}
+                      {busqueda.trim()
+                        ? `${clientesFiltrados.length} de ${clientes.length} ${clientes.length === 1 ? 'cliente' : 'clientes'}`
+                        : `${clientes.length} ${clientes.length === 1 ? 'cliente' : 'clientes'}`
+                      }
                     </p>
                   </div>
                 </div>
@@ -180,6 +199,36 @@ ${cliente.ultimo_pago ? `Tu último pago fue el ${ultimoPagoTexto}.` : 'Aún no 
                   <X className="w-5 h-5" />
                 </motion.button>
               </div>
+
+              {/* Buscador */}
+              {!loading && clientes.length > 0 && (
+                <div className="px-6 py-3 border-b border-gray-100 shrink-0">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Buscar cliente..."
+                      value={busqueda}
+                      onChange={(e) => setBusqueda(e.target.value)}
+                      className="
+                        w-full pl-9 pr-9 py-2.5
+                        bg-gray-100 rounded-xl
+                        text-sm text-gray-900 placeholder-gray-400
+                        focus:outline-none focus:ring-2 focus:ring-pink-300
+                        transition-all duration-200
+                      "
+                    />
+                    {busqueda && (
+                      <button
+                        onClick={() => setBusqueda('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -200,9 +249,18 @@ ${cliente.ultimo_pago ? `Tu último pago fue el ${ultimoPagoTexto}.` : 'Aún no 
                       No hay clientes con deuda pendiente
                     </p>
                   </div>
+                ) : clientesFiltrados.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                      <Search className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 font-medium">
+                      Sin resultados para "{busqueda}"
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
-                    {clientes.map((cliente, index) => (
+                    {clientesFiltrados.map((cliente, index) => (
                       <motion.div
                         key={cliente.id}
                         initial={{ opacity: 0, x: -20 }}
@@ -231,13 +289,27 @@ ${cliente.ultimo_pago ? `Tu último pago fue el ${ultimoPagoTexto}.` : 'Aún no 
                               </p>
                             </button>
 
-                            {/* Días sin pagar */}
-                            <div className="flex items-center gap-2 mb-2">
-                              <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
-                              <p className="text-sm text-gray-600">
-                                {formatDiasSinPagar(cliente.dias_sin_pagar)}
-                                {cliente.dias_sin_pagar !== null && cliente.dias_sin_pagar > 0 && ' sin pagar'}
-                              </p>
+                            {/* Días sin pagar / última compra */}
+                            <div className="flex items-start gap-2 mb-2">
+                              <Calendar className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                              {cliente.dias_sin_pagar !== null ? (
+                                <p className="text-sm text-gray-600">
+                                  {cliente.dias_sin_pagar === 0
+                                    ? 'Pagó hoy'
+                                    : `${formatDias(cliente.dias_sin_pagar)} sin pagar`}
+                                </p>
+                              ) : (
+                                <div>
+                                  <p className="text-sm font-medium text-orange-600">
+                                    Nunca pagó
+                                  </p>
+                                  {cliente.dias_desde_ultima_compra !== null && (
+                                    <p className="text-xs text-gray-500">
+                                      Última compra hace {formatDias(cliente.dias_desde_ultima_compra)}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
                             {/* Último pago */}
