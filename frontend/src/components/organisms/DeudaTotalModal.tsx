@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, TrendingUp, User, Calendar, MessageCircle, Search } from 'lucide-react';
+import { X, TrendingUp, User, Calendar, MessageCircle, Search, SlidersHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { clienteService } from '@/services/clienteService';
 import { formatCurrency, formatDate } from '@/utils/formatters';
@@ -29,6 +29,8 @@ interface ClienteConDeuda {
   dias_sin_pagar: number | null;
   ultima_compra: string | null;
   dias_desde_ultima_compra: number | null;
+  ultimo_ajuste: string | null;
+  dias_desde_ultimo_ajuste: number | null;
 }
 
 interface DeudaTotalModalProps {
@@ -317,6 +319,16 @@ ${cliente.ultimo_pago ? `Tu último pago fue el ${ultimoPagoTexto}.` : 'Aún no 
                               <p className="text-xs text-gray-500 mt-1">
                                 Último pago: {formatDate(cliente.ultimo_pago)}
                               </p>
+                            )}
+
+                            {/* Último ajuste */}
+                            {cliente.ultimo_ajuste && (
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                <SlidersHorizontal className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                <p className="text-xs text-purple-600">
+                                  Ajuste hace {formatDias(cliente.dias_desde_ultimo_ajuste!)}
+                                </p>
+                              </div>
                             )}
                           </div>
 

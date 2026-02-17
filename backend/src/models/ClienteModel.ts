@@ -266,6 +266,12 @@ export class ClienteModel {
         FROM movimientos
         WHERE tipo = 'DEBITO'
         GROUP BY cliente_id
+      ),
+      ultimo_ajuste AS (
+        SELECT cliente_id, MAX(fecha) as fecha
+        FROM movimientos
+        WHERE tipo = 'AJUSTE'
+        GROUP BY cliente_id
       )
       SELECT
         c.id,
@@ -284,11 +290,17 @@ export class ClienteModel {
         CASE
           WHEN uc.fecha IS NULL THEN NULL
           ELSE EXTRACT(DAY FROM NOW() - uc.fecha)::INTEGER
-        END AS dias_desde_ultima_compra
+        END AS dias_desde_ultima_compra,
+        ua.fecha AS ultimo_ajuste,
+        CASE
+          WHEN ua.fecha IS NULL THEN NULL
+          ELSE EXTRACT(DAY FROM NOW() - ua.fecha)::INTEGER
+        END AS dias_desde_ultimo_ajuste
       FROM clientes c
       INNER JOIN saldos_clientes sc ON c.id = sc.cliente_id
       LEFT JOIN ultimo_pago up ON c.id = up.cliente_id
       LEFT JOIN ultima_compra uc ON c.id = uc.cliente_id
+      LEFT JOIN ultimo_ajuste ua ON c.id = ua.cliente_id
       WHERE c.activo = TRUE
         AND sc.saldo > 0
       ORDER BY
